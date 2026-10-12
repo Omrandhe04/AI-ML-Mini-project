@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RadVision AI — Chest X-Ray CAD & Heatmap Localization</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="app-header">
+        <div class="header-left">
+            <div class="brand-logo">
+                <div class="logo-pulse"></div>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+            </div>
+            <div class="brand-text">
+                <h1>RadVision <span class="highlight">CAD</span></h1>
+                <p class="subtitle">Deep Learning Chest Radiograph Pathology & Heatmap Studio</p>
+            </div>
+        </div>
+
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="studio">
+                <span class="tab-icon">⚡</span> Scan Studio
+            </button>
+            <button class="nav-tab" data-tab="database">
+                <span class="tab-icon">📁</span> Database History <span class="badge" id="scansCountBadge">0</span>
+            </button>
+            <button class="nav-tab" data-tab="architecture">
+                <span class="tab-icon">🧠</span> Model & Blueprint
+            </button>
+            <button class="nav-tab" data-tab="analytics">
+                <span class="tab-icon">📊</span> Analytics
+            </button>
+        </nav>
+
+        <div class="header-right">
+            <div class="status-indicator">
+                <span class="status-dot"></span>
+                <span>SQLite Connected & AI Active</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-container">
+        
+        <!-- ================= TAB 1: SCAN STUDIO ================= -->
+        <section id="tab-studio" class="tab-content active">
+            <div class="studio-layout">
+                
+                <!-- Left Panel: Input & Patient Form -->
+                <div class="panel input-panel">
+                    <div class="panel-header">
+                        <h2>1. Patient & Imaging Parameters</h2>
+                        <span class="badge badge-info">ACR Standard</span>
+                    </div>
+
+                    <!-- Preset Samples for Quick Testing -->
+                    <div class="sample-selector-box">
+                        <label class="field-label">Quick Test Presets (Instant 1-Click Load):</label>
+                        <div class="sample-buttons">
+                            <button type="button" class="btn-sample" data-sample="sample_pneumonia">
+                                <span class="sample-dot pneumonia"></span>
+                                <span>Pneumonia (Consolidation)</span>
+                            </button>
+                            <button type="button" class="btn-sample" data-sample="sample_cardiomegaly">
+                                <span class="sample-dot cardio"></span>
+                                <span>Cardiomegaly (Enlarged Heart)</span>
+                            </button>
+                            <button type="button" class="btn-sample" data-sample="sample_normal">
+                                <span class="sample-dot normal"></span>
+                                <span>Normal / Clear CXR</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <form id="scanForm" enctype="multipart/form-data">
+                        <input type="hidden" id="sample_select" name="sample_select" value="">
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="patient_id">Patient ID</label>
+                                <input type="text" id="patient_id" name="patient_id" placeholder="e.g. PAT-8492" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="full_name">Patient Name</label>
+                                <input type="text" id="full_name" name="full_name" placeholder="e.g. Eleanor Vance" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="age">Age</label>
+                                <input type="number" id="age" name="age" min="1" max="110" value="54">
+                            </div>
+                            <div class="form-group">
+                                <label for="gender">Sex</label>
+                                <select id="gender" name="gender">
+                                    <option value="Female">Female</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="view_position">View Position</label>
+                                <select id="view_position" name="view_position">
+                                    <option value="PA">PA (Posteroanterior - Recommended)</option>
+                                    <option value="AP">AP (Anteroposterior)</option>
+                                    <option value="Lateral">Lateral View</option>
+                                </select>
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="clinical_indication">Clinical Indication / Symptoms</label>
+                                <input type="text" id="clinical_indication" name="clinical_indication" placeholder="e.g. Cough, acute fever, progressive dyspnea" value="Progressive dyspnea, fever, suspected infiltrate">
+                            </div>
+                        </div>
+
+                        <!-- Image Dropzone -->
+                        <div class="upload-zone" id="dropZone">
+                            <input type="file" id="imageInput" name="image" accept="image/*" class="file-input">
+                            <div class="upload-idle" id="uploadIdle">
+                                <div class="upload-icon">
+                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                </div>
+                                <p class="upload-title">Drop Chest X-ray scan here or <span class="browse-link">browse</span></p>
+                                <p class="upload-hint">Supports DICOM, PNG, JPEG (Frontal view)</p>
+                            </div>
+                            <div class="upload-preview hidden" id="uploadPreviewBox">
+                                <img id="previewImg" src="" alt="CXR Preview">
+                                <div class="preview-overlay">
+                                    <span id="previewFilename">image.png</span>
+                                    <button type="button" class="btn-clear" id="btnClearImg">Remove</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary" id="btnScan">
+                            <span class="btn-text">⚡ Scan & Localize Pathology</span>
+                            <div class="btn-spinner hidden" id="btnSpinner"></div>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Right Panel: AI Results, Grad-CAM & Report -->
+                <div class="panel results-panel">
+                    <div class="panel-header">
+                        <h2>2. Diagnostic Findings & Grad-CAM Heatmap</h2>
+                        <div class="severity-pill hidden" id="severityBadge">ROUTINE</div>
+                    </div>
+
+                    <!-- Empty State Placeholder -->
+                    <div class="empty-state" id="emptyResultsState">
+                        <div class="empty-graphic">
+                            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="3" y1="9" x2="21" y2="9"></line>
+                                <line x1="9" y1="21" x2="9" y2="9"></line>
+                            </svg>
+                        </div>
+                        <h3>No Active Radiograph Scan</h3>
+                        <p>Upload a Chest X-ray or click one of the quick presets on the left to trigger the AI inference pipeline, localization heatmap, and clinical report.</p>
+                    </div>
+
+                    <!-- Active Result Container -->
+                    <div class="results-container hidden" id="resultsContainer">
+                        
+                        <!-- Top Summary Cards -->
+                        <div class="summary-cards">
+                            <div class="card card-finding">
+                                <span class="card-label">Primary AI Finding</span>
+                                <h3 id="resPrimaryFinding">—</h3>
+                                <span class="card-sub" id="resTechnique">Frontal PA Radiograph</span>
+                            </div>
+                            <div class="card card-confidence">
+                                <span class="card-label">Model Confidence</span>
+                                <h3 id="resConfidence">—%</h3>
+                                <div class="conf-bar-wrapper">
+                                    <div class="conf-bar-fill" id="resConfidenceBar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="card card-triage">
+                                <span class="card-label">Clinical Triage</span>
+                                <h3 id="resTriage">—</h3>
+                                <span class="card-sub">Saved to Database</span>
+                            </div>
+                        </div>
+
+                        <!-- Side-by-Side Dual Radiograph Viewer with Heatmap Slider -->
+                        <div class="viewer-section">
+                            <div class="viewer-controls">
+                                <span class="viewer-title">Interactive Anatomical Heatmap Overlay</span>
+                                <div class="slider-group">
+                                    <label for="opacitySlider">Heatmap Intensity: <span id="opacityVal">60%</span></label>
+                                    <input type="range" id="opacitySlider" min="0" max="100" value="60">
+                                </div>
+                            </div>
+
+                            <div class="dual-viewer">
+                                <div class="viewer-frame">
+                                    <div class="frame-tag">Original Radiograph</div>
+                                    <img id="viewOriginalImg" src="" alt="Original CXR">
+                                </div>
+                                <div class="viewer-frame overlay-frame">
+                                    <div class="frame-tag tag-ai">Grad-CAM Localization</div>
+                                    <img id="viewBaseImg" src="" alt="Base CXR" class="img-base">
+                                    <img id="viewHeatmapImg" src="" alt="Heatmap Overlay" class="img-heatmap" style="opacity: 0.60;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Multi-Label Probabilities & Report Tabs -->
+                        <div class="details-section">
+                            <div class="subtabs">
+                                <button class="subtab-btn active" data-subtab="probabilities">Pathology Probabilities</button>
+                                <button class="subtab-btn" data-subtab="report">Full ACR Clinical Report</button>
+                            </div>
+
+                            <!-- Pathology Breakdown Subtab -->
+                            <div id="subtab-probabilities" class="subtab-content active">
+                                <div class="pathologies-grid" id="pathologiesGrid">
+                                    <!-- Populated via JS -->
+                                </div>
+                            </div>
+
+                            <!-- Structured Report Subtab -->
+                            <div id="subtab-report" class="subtab-content">
+                                <div class="report-box">
+                                    <div class="report-actions-bar">
+                                        <button class="btn-secondary" id="btnCopyReport">📋 Copy Text</button>
+                                        <a href="#" target="_blank" class="btn-primary-small" id="btnPrintReport">🖨️ Open Printable Report</a>
+                                    </div>
+                                    <pre id="reportPreText" class="report-pre"></pre>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- ================= TAB 2: DATABASE HISTORY ================= -->
+        <section id="tab-database" class="tab-content">
+            <div class="panel database-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Connected SQLite Database (radiology.db)</h2>
+                        <p class="subtitle">Complete persistent record of scanned patients, pathology findings, and reports.</p>
+                    </div>
+                    <button class="btn-secondary" id="btnRefreshDb">🔄 Refresh Records</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="db-table" id="scansTable">
+                        <thead>
+                            <tr>
+                                <th>Scan ID</th>
+                                <th>Date & Time</th>
+                                <th>Patient ID</th>
+                                <th>Patient Name</th>
+                                <th>View</th>
+                                <th>Primary Finding</th>
+                                <th>Confidence</th>
+                                <th>Severity</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scansTableBody">
+                            <tr>
+                                <td colspan="9" class="loading-td">Loading database records...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= TAB 3: MODEL & BLUEPRINT ================= -->
+        <section id="tab-architecture" class="tab-content">
+            <div class="panel blueprint-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Student Project Architecture & Defense Blueprint</h2>
+                        <p class="subtitle">Reference documentation for your project viva, presentation, and implementation details.</p>
+                    </div>
+                </div>
+
+                <div class="blueprint-grid">
+                    
+                    <div class="blueprint-card">
+                        <h3>1. Model Backbone: DenseNet-121</h3>
+                        <p>Stanford's <strong>CheXNet</strong> proved DenseNet-121 achieves radiologist-level performance on pneumonia and thoracic findings. Unlike ResNet which adds feature maps, DenseNet concatenates all preceding layers:</p>
+                        <code>x_l = H_l([x_0, x_1, ..., x_{l-1}])</code>
+                        <ul class="blueprint-list">
+                            <li><strong>Feature Reuse:</strong> Low-level lung margins and rib edge features flow directly into high-level layers.</li>
+                            <li><strong>Pretraining:</strong> Initialized with ImageNet or <code>torchxrayvision</code> medical weights.</li>
+                            <li><strong>Classifier:</strong> Global Average Pooling + Dropout(0.2) + Linear(1024, 14).</li>
+                        </ul>
+                    </div>
+
+                    <div class="blueprint-card">
+                        <h3>2. Explainability: Grad-CAM Formulation</h3>
+                        <p>Generates visual explanations without requiring costly bounding box annotations during training:</p>
+                        <div class="math-box">
+                            $$\alpha_k^c = \frac{1}{Z} \sum_{i} \sum_{j} \frac{\partial y^c}{\partial A_{i,j}^k}$$
+                            $$L_{\text{Grad-CAM}}^c = \text{ReLU}\left(\sum_k \alpha_k^c A^k\right)$$
+                        </div>
+                        <p>In DenseNet-121, extract activations and gradients at <code>model.features.denseblock4.denselayer16.conv2</code>.</p>
+                    </div>
+
+                    <div class="blueprint-card">
+                        <h3>3. Patient Leakage Prevention (#1 Pitfall)</h3>
+                        <div class="warning-alert">
+                            <strong>CRITICAL EXAM POINT:</strong> Never use standard random train/test split!
+                        </div>
+                        <p>Patients in the NIH dataset have multiple follow-up visits. Splitting purely by image indexes puts the same patient in both train and test sets, artificially inflating AUROC by 5–15%. Always split grouped by <code>Patient ID</code>.</p>
+                    </div>
+
+                    <div class="blueprint-card">
+                        <h3>4. Evaluation Metrics for Medical AI</h3>
+                        <ul class="blueprint-list">
+                            <li><strong>AUROC:</strong> Primary clinical metric; handles class imbalance well.</li>
+                            <li><strong>Youden's J Index:</strong> $J = \text{Sensitivity} + \text{Specificity} - 1$ to calibrate disease-specific thresholds (do NOT default to 0.5).</li>
+                            <li><strong>Pointing Game / Bounding Box IoU:</strong> Validates if Grad-CAM peak lies inside NIH ground-truth radiologist boxes.</li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= TAB 4: ANALYTICS ================= -->
+        <section id="tab-analytics" class="tab-content">
+            <div class="panel analytics-panel">
+                <div class="panel-header">
+                    <h2>Radiology CAD Analytics & Diagnostic Metrics</h2>
+                </div>
+
+                <div class="analytics-metrics-grid">
+                    <div class="metric-card">
+                        <span class="metric-title">Total Processed Scans</span>
+                        <h2 id="statTotalScans">0</h2>
+                        <span class="metric-sub">Recorded in SQLite</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-title">Abnormal Cases Flagged</span>
+                        <h2 id="statAbnormalScans" class="text-warning">0</h2>
+                        <span class="metric-sub">Positive for pathology</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-title">Normal / Clear Studies</span>
+                        <h2 id="statNormalScans" class="text-success">0</h2>
+                        <span class="metric-sub">No acute cardiopulmonary findings</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-title">Unique Patients</span>
+                        <h2 id="statTotalPatients">0</h2>
+                        <span class="metric-sub">Database registered IDs</span>
+                    </div>
+                </div>
+
+                <div class="panel-subbox">
+                    <h3>Most Frequently Detected Pathologies</h3>
+                    <div id="topFindingsList" class="top-findings-container">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p>RadVision AI CAD Suite • Designed for Academic Research & Computer-Aided Diagnosis • Localhost Server + SQLite DB Active</p>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

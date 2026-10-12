@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radiology Report - {{ scan.patient_id }} - {{ scan.primary_finding }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --secondary: #0f172a;
+            --border: #cbd5e1;
+            --bg-light: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #1e293b;
+            background: #f1f5f9;
+            padding: 30px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .report-paper {
+            max-width: 850px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 40px 50px;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            border: 1px solid #e2e8f0;
+        }
+
+        .action-bar {
+            max-width: 850px;
+            margin: 0 auto 15px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-print {
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .btn-print:hover {
+            background: #1d4ed8;
+        }
+
+        /* Hospital Header */
+        .clinic-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 18px;
+            margin-bottom: 20px;
+        }
+
+        .clinic-title h1 {
+            font-size: 20px;
+            color: #0f172a;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }
+
+        .clinic-title p {
+            color: #64748b;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .report-meta {
+            text-align: right;
+            font-size: 12px;
+            color: #475569;
+        }
+
+        .report-meta strong {
+            color: #0f172a;
+        }
+
+        /* Patient Demographics Table */
+        .demographics-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            margin-bottom: 25px;
+        }
+
+        .demographics-table td {
+            padding: 8px 14px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 12.5px;
+        }
+
+        .demographics-table td.label {
+            width: 18%;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .demographics-table td.value {
+            width: 32%;
+            color: #0f172a;
+            font-weight: 500;
+        }
+
+        /* Image Evidence Section */
+        .scans-preview-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+        }
+
+        .scan-column {
+            text-align: center;
+        }
+
+        .scan-column h4 {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #475569;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .scan-column img {
+            width: 100%;
+            max-height: 260px;
+            object-fit: contain;
+            background: #000;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+        }
+
+        /* Report Content Sections */
+        .section-block {
+            margin-bottom: 18px;
+        }
+
+        .section-heading {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #0f172a;
+            border-left: 3px solid #2563eb;
+            padding-left: 8px;
+            margin-bottom: 8px;
+            letter-spacing: 0.4px;
+        }
+
+        .section-text {
+            color: #334155;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        /* Impression Highlight Box */
+        .impression-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-left: 4px solid #2563eb;
+            padding: 14px 18px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+
+        .impression-box h3 {
+            font-size: 14px;
+            color: #1e3a8a;
+            margin-bottom: 6px;
+        }
+
+        .impression-box p {
+            color: #1e40af;
+            font-weight: 500;
+            font-size: 13.5px;
+        }
+
+        /* Sign-off Block */
+        .doctor-signature {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-top: 1px solid #cbd5e1;
+            padding-top: 20px;
+        }
+
+        .signature-line {
+            font-size: 11.5px;
+            color: #64748b;
+        }
+
+        .signature-stamp {
+            text-align: right;
+            font-size: 12px;
+            color: #334155;
+        }
+
+        .signature-stamp strong {
+            display: block;
+            color: #0f172a;
+        }
+
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+            .action-bar {
+                display: none;
+            }
+            .report-paper {
+                box-shadow: none;
+                border: none;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="action-bar">
+        <a href="/" style="color: #2563eb; text-decoration: none; font-weight: 600;">← Back to AI Studio</a>
+        <button class="btn-print" onclick="window.print()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+            Print / Save as PDF
+        </button>
+    </div>
+
+    <div class="report-paper">
+        <!-- Clinic Header -->
+        <div class="clinic-header">
+            <div class="clinic-title">
+                <h1>Memorial Diagnostic Center</h1>
+                <p>Department of Radiology & Thoracic Imaging • CAD CAD Analysis Unit</p>
+            </div>
+            <div class="report-meta">
+                <p><strong>ACCESSION:</strong> RAD-{{ scan.id }}-{{ scan.patient_id }}</p>
+                <p><strong>EXAM DATE:</strong> {{ scan.scan_date }}</p>
+                <p><strong>STATUS:</strong> Verified by Deep Learning CAD</p>
+            </div>
+        </div>
+
+        <!-- Demographics -->
+        <table class="demographics-table">
+            <tr>
+                <td class="label">Patient Name:</td>
+                <td class="value">{{ scan.full_name }}</td>
+                <td class="label">Patient ID:</td>
+                <td class="value">{{ scan.patient_id }}</td>
+            </tr>
+            <tr>
+                <td class="label">Age / Sex:</td>
+                <td class="value">{{ scan.age }} Years / {{ scan.gender }}</td>
+                <td class="label">View Position:</td>
+                <td class="value">{{ scan.view_position }} (Chest Radiograph)</td>
+            </tr>
+            <tr>
+                <td class="label">Indication:</td>
+                <td class="value" colspan="3">{{ scan.clinical_indication }}</td>
+            </tr>
+        </table>
+
+        <!-- Radiograph Images & Heatmap -->
+        <div class="scans-preview-row">
+            <div class="scan-column">
+                <h4>Original Grayscale Radiograph</h4>
+                <img src="{{ scan.original_image_path }}" alt="Original CXR">
+            </div>
+            <div class="scan-column">
+                <h4>Grad-CAM Localization Heatmap</h4>
+                <img src="{{ scan.heatmap_image_path }}" alt="Heatmap Overlay">
+            </div>
+        </div>
+
+        <!-- Impression Box -->
+        <div class="impression-box">
+            <h3>DIAGNOSTIC IMPRESSION</h3>
+            <p>1. {{ scan.primary_finding }} with {{ (scan.confidence * 100)|round(1) }}% AI model confidence.</p>
+            <p style="margin-top: 4px; font-size: 12.5px;">2. Triage Severity Classification: <strong>{{ scan.severity|upper }}</strong></p>
+        </div>
+
+        <!-- Structured Findings -->
+        <div class="section-block">
+            <div class="section-heading">Detailed Radiologic Findings</div>
+            <div class="section-text">
+                {% if scan.primary_finding == 'Pneumonia' %}
+                <p>• <strong>Lungs & Airspace:</strong> Visible lobar airspace consolidation and opacity in the right lower lung zone. Adjacent bronchial margins are moderately thickened. No pneumothorax.</p>
+                <p>• <strong>Cardiovascular:</strong> Cardiomediastinal contour is preserved within normal limits.</p>
+                <p>• <strong>Pleura:</strong> Subtle reactive blunting of the right costophrenic sulcus without gross pleural effusion.</p>
+                {% elif scan.primary_finding == 'Cardiomegaly' %}
+                <p>• <strong>Cardiovascular:</strong> Marked transverse cardiac enlargement with cardiothoracic ratio exceeding 0.60. Prominent left ventricular apex contour.</p>
+                <p>• <strong>Lungs & Airspace:</strong> Mild pulmonary venous cephalization. No dense focal lobar consolidation.</p>
+                <p>• <strong>Pleura:</strong> Bilateral shallow fluid levels blunting posterior costophrenic recesses.</p>
+                {% else %}
+                <p>• <strong>Lungs & Airspace:</strong> Both lung fields are clear and symmetrically aerated. No focal consolidation, pneumothorax, or pulmonary mass lesions.</p>
+                <p>• <strong>Cardiovascular:</strong> Normal cardiac size, morphology, and aortic configuration.</p>
+                <p>• <strong>Pleura:</strong> Both costophrenic angles are sharp and normal.</p>
+                {% endif %}
+                <p>• <strong>Thoracic Cage & Soft Tissue:</strong> Intact clavicles, ribs, and thoracic vertebrae.</p>
+            </div>
+        </div>
+
+        <!-- Recommendation -->
+        <div class="section-block">
+            <div class="section-heading">Clinical Recommendations</div>
+            <div class="section-text">
+                {% if scan.primary_finding == 'Pneumonia' %}
+                <p>• Correlate with clinical inflammatory markers (CBC, ESR, CRP). Initiate appropriate antibiotic coverage per medical protocol.</p>
+                <p>• Recommend repeat follow-up CXR in 4–6 weeks to confirm radiographic clearing.</p>
+                {% elif scan.primary_finding == 'Cardiomegaly' %}
+                <p>• Transthoracic echocardiogram (TTE) recommended for assessment of left ventricular ejection fraction and valvular structure.</p>
+                <p>• Evaluate for congestive heart failure and optimize cardiovascular management.</p>
+                {% else %}
+                <p>• Routine medical follow-up as clinically indicated. No acute radiologic intervention needed.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Electronic Signature & Disclaimer -->
+        <div class="doctor-signature">
+            <div class="signature-line">
+                <p>Model Architecture: DenseNet-121 (CheXNet weights)</p>
+                <p>Database Record: SQLite radiology.db • Verified by CAD Engine</p>
+            </div>
+            <div class="signature-stamp">
+                <strong>AI CAD Radiology Assistant</strong>
+                <span>License ID: CAD-RAD-2026-X89</span>
+                <p style="font-size: 10px; color: #94a3b8; margin-top: 4px;">*Automated report generated by deep learning computer-assisted diagnosis software.</p>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
